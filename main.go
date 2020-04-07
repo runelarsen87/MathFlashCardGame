@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"fmt"
 	"math"
+	"math/rand"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // timer
@@ -57,7 +59,79 @@ type ScoreBoard struct {
 
 func (s *ScoreBoard) printScore() {
 
-	fmt.Printf("Correct: %d, wrong: %d", s.correct, s.wrong)
+	fmt.Printf("Correct: %d, wrong: %d\n", s.correct, s.wrong)
+}
+
+func (s *ScoreBoard) addCorrect() {
+	s.correct++
+}
+
+func (s *ScoreBoard) addWrong() {
+	s.wrong++
+}
+
+// FlashCard struct
+type FlashCard struct {
+	gameType         string
+	level            int8
+	expectedResponse float64
+}
+
+// NewFlashCard creates an instance of FlashCard including a math question.
+func NewFlashCard(gameType string, level int8) *FlashCard {
+	// TODO Ensure that gameType and level are compatible with game
+
+	card := new(FlashCard)
+	card.gameType = gameType
+	card.level = level
+
+	// Create question
+
+	// Create expected reponse
+
+	return card
+
+}
+
+func (card *FlashCard) checkResponse(reponse float64) bool {
+	return almostEqual(card.expectedResponse, reponse)
+}
+
+func (card *FlashCard) printQuestion(counter int) float64 {
+	s1 := rand.NewSource(time.Now().UnixNano())
+	r1 := rand.New(s1)
+
+	a := r1.Intn(200)
+	b := r1.Intn(200)
+	var operator string
+	switch card.gameType {
+	case "addition":
+		operator = "+"
+		card.expectedResponse = float64(a) + float64(b)
+	case "subtraction":
+		operator = "-"
+		card.expectedResponse = float64(a) - float64(b)
+	case "multiplication":
+		operator = "*"
+		card.expectedResponse = float64(a) * float64(b)
+	case "division":
+		operator = "/"
+		card.expectedResponse = float64(a) / float64(b)
+	case "mixed":
+		operator = "*"
+		card.expectedResponse = float64(a) * float64(b)
+	}
+	fmt.Printf("Question no. %d\n", counter)
+	fmt.Printf("%d %s %d = ?\n", a, operator, b)
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	responseInput := scanner.Text()
+	response, err := strconv.Atoi(responseInput)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(2)
+	}
+	return float64(response)
 }
 
 // Game struct
@@ -65,12 +139,17 @@ type Game struct {
 	gameType      string
 	level         int8
 	timeAllocated int8 //Minutes
+	counter       int
 
 	scoreBoard ScoreBoard
 }
 
 func (game *Game) initialize() {
 	scanner := bufio.NewScanner(os.Stdin)
+
+	fmt.Println("Welcome to the Math Flash Card Game!!!")
+	fmt.Println("Practice your addition, subtraction, multiplication, and division skills!")
+	fmt.Println("Press (s) for start. At anytime press (q) to exit. It is not possible to continue game.")
 
 	fmt.Println("Choose between; addition, substraction, multiplication, division, mixed")
 	scanner.Scan()
@@ -113,33 +192,40 @@ func (game *Game) initialize() {
 	game.timeAllocated = int8(timeAllocated)
 
 	fmt.Println("Starting game!!!")
-	fmt.Printf("How many %s tasks can you solve in %d minutes on level %d?", game.gameType, game.timeAllocated, game.level)
+	fmt.Printf("How many %s tasks can you solve in %d minutes on level %d?\n", game.gameType, game.timeAllocated, game.level)
 }
 
 func (game *Game) play() {
-	for {
+	//  repeat-until loop
+	startTime := time.Now()
+	for ok := true; ok; ok = time.Since(startTime).Seconds() < float64(game.timeAllocated*60) {
+		game.counter++
+		// Generate FlashCard
+		card := NewFlashCard(game.gameType, game.level)
+
+		// present FlashCard
+		response := card.printQuestion(game.counter)
+		fmt.Printf("Reponse: %d\n", int(response))
+
+		// evaluate response
+		validatedResponse := card.checkResponse(response)
+
+		// add to score
+		if validatedResponse == true {
+			game.scoreBoard.addCorrect()
+		} else if validatedResponse == false {
+			game.scoreBoard.addWrong()
+		}
 
 	}
+
+	fmt.Println("Time has passed.")
 
 	game.scoreBoard.printScore()
 }
 
-// FlashCard struct
-type FlashCard struct {
-	gameType         string
-	expectedResponse float64
-}
-
-func (card *FlashCard) checkResponse(reponse float64) bool {
-	return almostEqual(card.expectedResponse, reponse)
-}
-
 // main function - game initiation and loop
 func main() {
-	fmt.Println("Welcome to the Math Flash Card Game!!!")
-	fmt.Println("Practice your addition, subtraction, multiplication, and division skills!")
-	fmt.Println("Press (s) for start. At anytime press (q) to exit. It is not possible to continue game.")
-
 	game := Game{}
 	game.initialize() // setup game
 	game.play()
