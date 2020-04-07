@@ -27,7 +27,7 @@ func almostEqual(a, b float64) bool {
 
 // isValidGameType function to check if gameType is a valid kind.
 func isValidGameType(gameType string) bool {
-	switch gameType {
+	switch level {
 	case
 		"addition",
 		"subtraction",
@@ -35,6 +35,16 @@ func isValidGameType(gameType string) bool {
 		"division",
 		"mixed":
 		return true
+	}
+	return false
+}
+
+// isValidGameType function to check if gameType is a valid kind.
+func isValidLevel(level int) bool {
+	for _, b := range [7]int{1, 2, 3, 4, 5, 6, 7} {
+		if b == level {
+			return true
+		}
 	}
 	return false
 }
@@ -69,7 +79,7 @@ func (game *Game) initialize() {
 
 	validGameType := isValidGameType(gameTypeInput)
 	if validGameType == false {
-		fmt.Println(" Game type needs to be either; addition, substration, multiplication, division or mixed.")
+		fmt.Println("Game type needs to be either; addition, substration, multiplication, division or mixed.")
 		os.Exit(2)
 	}
 	game.gameType = gameTypeInput
@@ -81,6 +91,11 @@ func (game *Game) initialize() {
 	level, err := strconv.Atoi(levelInput)
 	if err != nil {
 		fmt.Println(err)
+		os.Exit(2)
+	}
+	validLevel := isValidLevel(level)
+	if validLevel == false {
+		fmt.Println("Level needs to be either an integer between 1 and 7.")
 		os.Exit(2)
 	}
 	game.level = int8(level)
