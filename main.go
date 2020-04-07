@@ -27,7 +27,7 @@ func almostEqual(a, b float64) bool {
 
 // isValidGameType function to check if gameType is a valid kind.
 func isValidGameType(gameType string) bool {
-	switch level {
+	switch gameType {
 	case
 		"addition",
 		"subtraction",
